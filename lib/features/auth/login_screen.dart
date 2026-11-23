@@ -136,7 +136,7 @@ class _DemoAccountCard extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Row(
         children: [
-          const Icon(Icons.science_outlined, color: AppColors.clay),
+          Icon(Icons.science_outlined, color: AppColors.clay),
           const SizedBox(width: 12),
           Expanded(
             child: Text(

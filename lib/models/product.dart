@@ -26,6 +26,7 @@ class Product {
     required this.suitableSkinTypes,
     required this.accentColor,
     this.howToUse = '',
+    this.price,
   });
 
   final String id;
@@ -42,6 +43,10 @@ class Product {
   final Set<String> suitableConcerns;
   final Set<String> suitableSkinTypes;
   final String howToUse;
+
+  // FUTURE DATABASE INTEGRATION: formatted price from the product table.
+  // Demo products have none, so the Price row stays hidden.
+  final String? price;
 
   /// Colour used for the illustrative bottle placeholder.
   final Color accentColor;

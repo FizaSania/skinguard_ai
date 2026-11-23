@@ -46,6 +46,14 @@ class _AllergySelectorState extends State<AllergySelector> {
     });
   }
 
+  String _chipLabel(UserProfile profile, String allergy) {
+    if (profile.isCustomAllergy(allergy)) return '$allergy (custom)';
+    final product = profile.reactionProduct.trim();
+    return allergy == kProductReactionAllergy && product.isNotEmpty
+        ? '$allergy: $product'
+        : allergy;
+  }
+
   @override
   Widget build(BuildContext context) {
     final users = context.watch<UserProvider>();
@@ -54,6 +62,10 @@ class _AllergySelectorState extends State<AllergySelector> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (users.profile.hasProductReaction) ...[
+          const _ReactionProductField(),
+          const SizedBox(height: AppSpacing.lg),
+        ],
         AppTextField(
           label: 'Other allergy',
           hint: "Can't find your allergy? Type its name.",
@@ -65,7 +77,7 @@ class _AllergySelectorState extends State<AllergySelector> {
           suffix: IconButton(
             key: const Key('add_custom_allergy'),
             tooltip: 'Add allergy',
-            icon: const Icon(Icons.add_circle, color: AppColors.primary),
+            icon: Icon(Icons.add_circle, color: AppColors.primary),
             onPressed: _addCustom,
           ),
         ),
@@ -118,12 +130,88 @@ class _AllergySelectorState extends State<AllergySelector> {
             children: [
               for (final a in allergies)
                 TagChip(
-                  label: users.profile.isCustomAllergy(a) ? '$a (custom)' : a,
+                  label: _chipLabel(users.profile, a),
                   onDeleted: () => users.removeAllergy(a),
                 ),
             ],
           ),
       ],
+    );
+  }
+}
+
+/// Required field shown only while "Skincare product reaction" is selected.
+class _ReactionProductField extends StatefulWidget {
+  const _ReactionProductField();
+
+  @override
+  State<_ReactionProductField> createState() => _ReactionProductFieldState();
+}
+
+class _ReactionProductFieldState extends State<_ReactionProductField> {
+  late final TextEditingController _controller = TextEditingController(
+      text: context.read<UserProvider>().profile.reactionProduct);
+  bool _wasShowingError = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final users = context.watch<UserProvider>();
+    final showError = users.showReactionProductError;
+    if (showError && !_wasShowingError) {
+      // The field is at the top of a long page; bring the error into view.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          Scrollable.ensureVisible(context,
+              duration: const Duration(milliseconds: 250));
+        }
+      });
+    }
+    _wasShowingError = showError;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppTextField(
+          label: 'Which product caused the reaction?',
+          hint: 'Enter the product name or ingredient',
+          controller: _controller,
+          fieldKey: const Key('reaction_product_field'),
+          textInputAction: TextInputAction.done,
+          maxLength: 80,
+          onChanged: users.setReactionProduct,
+        ),
+        if (showError)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text('Please enter the product that caused the reaction',
+                style: AppTextStyles.small.copyWith(color: AppColors.danger)),
+          ),
+      ],
+    );
+  }
+}
+
+/// Keeps the user on the allergy step while the required product is missing.
+class AllergyStepGuard extends StatelessWidget {
+  const AllergyStepGuard({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final users = context.watch<UserProvider>();
+    return PopScope(
+      canPop: !(users.user?.isReactionProductMissing ?? false),
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) users.validateAllergies();
+      },
+      child: child,
     );
   }
 }

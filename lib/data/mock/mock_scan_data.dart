@@ -14,9 +14,31 @@ class MockScanData {
     concern: 'Acne',
     confidence: 0.87,
     region: null,
+    affectedRegions: [FaceRegion.forehead],
+    acne: _moderateAcne,
     explanation:
         'The model detected visual characteristics associated with acne, such '
         'as clustered red bumps on the forehead. This is not a medical diagnosis.',
+  );
+
+  static const _optionalDoctorAdvice =
+      'Acne is not severe yet. A doctor visit is optional; consult one only '
+      'if it worries you or you want professional advice.';
+
+  static const AcneAssessment _moderateAcne = AcneAssessment(
+    spotCount: 12,
+    severity: 'Moderate',
+    stage: 'Stage 2',
+    stageConfidence: 0.82,
+    advice: _optionalDoctorAdvice,
+  );
+
+  static const AcneAssessment _mildAcne = AcneAssessment(
+    spotCount: 5,
+    severity: 'Mild',
+    stage: 'Stage 1',
+    stageConfidence: 0.78,
+    advice: _optionalDoctorAdvice,
   );
 
   static const Map<FaceRegion, ConcernFinding> regionFindings = {
@@ -24,25 +46,26 @@ class MockScanData {
       concern: 'Acne',
       confidence: 0.87,
       region: FaceRegion.forehead,
+      acne: _moderateAcne,
       explanation:
           'The model detected visual characteristics associated with acne, such '
           'as clustered red bumps on the forehead. This is not a medical diagnosis.',
     ),
     FaceRegion.leftCheek: ConcernFinding(
-      concern: 'Hyperpigmentation',
+      concern: 'Pigmentation',
       confidence: 0.74,
       region: FaceRegion.leftCheek,
       explanation:
           'The model detected areas of uneven, darker tone on the left cheek, '
-          'which are associated with hyperpigmentation. This is not a medical diagnosis.',
+          'which are associated with pigmentation. This is not a medical diagnosis.',
     ),
     FaceRegion.rightCheek: ConcernFinding(
-      concern: 'Hyperpigmentation',
+      concern: 'Redness',
       confidence: 0.71,
       region: FaceRegion.rightCheek,
       explanation:
-          'The model detected areas of uneven, darker tone on the right cheek, '
-          'which are associated with hyperpigmentation. This is not a medical diagnosis.',
+          'The model detected visible redness on the right cheek. This is not '
+          'a medical diagnosis.',
     ),
     FaceRegion.nose: ConcernFinding(
       concern: 'Enlarged pores',
@@ -64,6 +87,7 @@ class MockScanData {
       concern: 'Acne',
       confidence: 0.81,
       region: FaceRegion.chin,
+      acne: _mildAcne,
       explanation:
           'The model detected raised red bumps on the chin associated with acne. '
           'This is not a medical diagnosis.',

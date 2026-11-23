@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:skinguard_ai/core/constants/app_assets.dart';
 import 'package:skinguard_ai/core/widgets/form_fields.dart';
 import 'package:skinguard_ai/data/mock/mock_scan_data.dart';
+import 'package:skinguard_ai/models/recommendation.dart';
 import 'package:skinguard_ai/models/skin_concern.dart';
 import 'package:skinguard_ai/models/skin_scan.dart';
 import 'package:skinguard_ai/models/skincare_plan.dart';
@@ -204,6 +205,105 @@ void main() {
       final bundle = service.build(profile: _profile(), result: acne);
       expect(bundle.primaryConcern, 'Acne');
       expect(bundle.ingredientsToLookFor, contains('Niacinamide'));
+    });
+  });
+
+  group('Reaction product', () {
+    late UserProvider users;
+    setUp(() async {
+      users = UserProvider(MockAuthService(), MockProfileService());
+      await users.register(
+          fullName: 'A B',
+          email: 'ab@example.com',
+          phone: '1234567',
+          password: 'abcdefg1');
+    });
+
+    test('Salicylic Acid is no longer a listed option', () {
+      expect(kPredefinedAllergies, isNot(contains('Salicylic Acid')));
+    });
+
+    test('is required only while the reaction allergy is selected', () {
+      expect(users.validateAllergies(), isTrue);
+      users.toggleAllergy(kProductReactionAllergy);
+      expect(users.validateAllergies(), isFalse);
+      expect(users.showReactionProductError, isTrue);
+
+      users.setReactionProduct('   ');
+      expect(users.validateAllergies(), isFalse);
+
+      users.setReactionProduct('  Gentle Gel Cleanser ');
+      expect(users.validateAllergies(), isTrue);
+      expect(users.profile.reactionProduct, 'Gentle Gel Cleanser');
+      expect(users.profile.toJson()['reactionProduct'], 'Gentle Gel Cleanser');
+    });
+
+    test('unselecting clears the value and its error', () {
+      users.toggleAllergy(kProductReactionAllergy);
+      users.validateAllergies();
+      users.toggleAllergy(kProductReactionAllergy);
+      expect(users.showReactionProductError, isFalse);
+      expect(users.profile.reactionProduct, isEmpty);
+      expect(users.validateAllergies(), isTrue);
+    });
+
+    test('the named product is excluded from recommendations', () {
+      final bundle = MockRecommendationService().build(
+        profile: _profile(allergies: [kProductReactionAllergy])
+          ..reactionProduct = 'Gentle Gel Cleanser',
+        result: AnalysisResult(
+          scanId: 's',
+          findings: const [MockScanData.fullFaceFinding],
+          generatedAt: DateTime(2026),
+          isDemo: true,
+        ),
+      );
+      expect(bundle.recommendations.map((r) => r.product.name),
+          isNot(contains('Gentle Gel Cleanser')));
+      expect(bundle.ingredientsToAvoid, ['Gentle Gel Cleanser']);
+    });
+  });
+
+  group('Recommendation stage', () {
+    RecommendationBundle bundleFor(FaceRegion region, {SkinType? skin}) =>
+        MockRecommendationService().build(
+          profile: _profile(skin: skin),
+          result: AnalysisResult(
+            scanId: 's',
+            findings: [MockScanData.regionFindings[region]!],
+            generatedAt: DateTime(2026),
+            isDemo: true,
+          ),
+        );
+
+    test('optional stage returns one product', () {
+      final bundle = bundleFor(FaceRegion.chin);
+      expect(bundle.stage, RecommendationStage.optional);
+      expect(bundle.recommendations, hasLength(1));
+      expect(bundle.recommendations.single.pairings, isEmpty);
+    });
+
+    test('recommended stage returns three products with pairings', () {
+      final bundle = bundleFor(FaceRegion.forehead);
+      expect(bundle.stage, RecommendationStage.recommended);
+      expect(bundle.recommendations, hasLength(3));
+      expect(bundle.recommendations.first.pairings,
+          ['Cleanser + Moisturizer', 'Cleanser + Sunscreen']);
+    });
+
+    test('conflicts follow the skin type', () {
+      final bundle = bundleFor(FaceRegion.rightCheek, skin: SkinType.sensitive);
+      final moisturizer = bundle.forProduct('oil-free-gel-moisturizer')!;
+      expect(moisturizer.conflicts.single.level, ConflictLevel.mild);
+    });
+
+    test('concern labels map to the right presentation', () {
+      expect(MockScanData.fullFaceFinding.kind, ConcernKind.acne);
+      expect(MockScanData.fullFaceFinding.regionLabel, 'Forehead');
+      expect(MockScanData.regionFindings[FaceRegion.rightCheek]!.kind,
+          ConcernKind.redness);
+      expect(MockScanData.regionFindings[FaceRegion.leftCheek]!.kind,
+          ConcernKind.pigmentation);
     });
   });
 

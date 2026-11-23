@@ -137,16 +137,16 @@ class AppCard extends StatelessWidget {
     super.key,
     required this.child,
     this.padding = const EdgeInsets.all(AppSpacing.lg + 4),
-    this.color = AppColors.surface,
-    this.borderColor = AppColors.border,
+    this.color,
+    this.borderColor,
     this.onTap,
     this.radius = AppRadius.lg,
   });
 
   final Widget child;
   final EdgeInsetsGeometry padding;
-  final Color color;
-  final Color borderColor;
+  final Color? color;
+  final Color? borderColor;
   final VoidCallback? onTap;
   final double radius;
 
@@ -154,10 +154,10 @@ class AppCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final shape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(radius),
-      side: BorderSide(color: borderColor),
+      side: BorderSide(color: borderColor ?? AppColors.border),
     );
     return Material(
-      color: color,
+      color: color ?? AppColors.surface,
       shape: shape,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -241,7 +241,7 @@ class DemoBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.science_outlined, size: 14, color: AppColors.clay),
+          Icon(Icons.science_outlined, size: 14, color: AppColors.clay),
           const SizedBox(width: 4),
           Flexible(
             child: Text(label,
@@ -261,17 +261,19 @@ class InfoNote extends StatelessWidget {
     super.key,
     required this.text,
     this.icon = Icons.info_outline,
-    this.color = AppColors.primarySoft,
-    this.foreground = AppColors.textPrimary,
+    this.color,
+    this.foreground,
   });
 
   final String text;
   final IconData icon;
-  final Color color;
-  final Color foreground;
+  final Color? color;
+  final Color? foreground;
 
   @override
   Widget build(BuildContext context) {
+    final color = this.color ?? AppColors.primarySoft;
+    final foreground = this.foreground ?? AppColors.textPrimary;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.md + 2),
@@ -320,7 +322,7 @@ class EmptyState extends StatelessWidget {
           Container(
             width: 76,
             height: 76,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
                 color: AppColors.primarySoft, shape: BoxShape.circle),
             child: Icon(icon, size: 34, color: AppColors.primary),
           ),

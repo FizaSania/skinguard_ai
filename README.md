@@ -170,7 +170,16 @@ instead of image bytes).
 
 ---
 
-## 6. Limitations
+## 6. FYP-2 features (Coming Soon)
+
+Recommendations, Lifestyle Guide, My Plan & Tracker, History, Heatmap,
+"Why this result?" and the Result Details insights are fully built but hidden
+behind switches in `lib/core/config/feature_flags.dart`. Set a flag to `true`
+to bring that feature back; no other code needs to change.
+
+---
+
+## 7. Limitations
 
 * No real authentication, persistence, ML inference, heatmap, crop, lighting
   detection, push reminders or dermatologist booking – all clearly marked.

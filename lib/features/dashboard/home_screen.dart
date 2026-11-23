@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../app/routes.dart';
+import '../../core/config/feature_flags.dart';
 import '../../core/widgets/brand.dart';
+import '../../core/widgets/coming_soon.dart';
 import '../../core/widgets/layout.dart';
 import '../../providers/user_provider.dart';
 import '../../theme/app_colors.dart';
@@ -29,7 +31,7 @@ class HomeScreen extends StatelessWidget {
         leading: IconButton(
           tooltip: 'Settings',
           icon: const Icon(Icons.settings_outlined),
-          onPressed: () => onSelectTab(2),
+          onPressed: () => Navigator.pushNamed(context, AppRoutes.settings),
         ),
       ),
       body: SafeArea(
@@ -87,6 +89,7 @@ class HomeScreen extends StatelessWidget {
                     title: 'Recommended for You',
                     subtitle: 'Suggestions based on your skin profile.',
                     route: AppRoutes.recommendations,
+                    enabled: FeatureFlags.recommendations,
                   ),
                   const Divider(height: 1),
                   _ExploreRow(
@@ -99,12 +102,14 @@ class HomeScreen extends StatelessWidget {
                     title: 'My Plan Tracker',
                     subtitle: 'Keep track of your skincare routine.',
                     route: AppRoutes.planner,
+                    enabled: FeatureFlags.planner,
                   ),
                   const Divider(height: 1),
                   _ExploreRow(
                     title: 'Lifestyle Guide',
                     subtitle: 'Discover skincare and lifestyle tips.',
                     route: AppRoutes.lifestyle,
+                    enabled: FeatureFlags.lifestyle,
                   ),
                 ],
               ),
@@ -130,9 +135,9 @@ class _AnalyzeCard extends StatelessWidget {
           Container(
             width: 64,
             height: 64,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
                 color: AppColors.primarySoft, shape: BoxShape.circle),
-            child: const Icon(Icons.face_retouching_natural,
+            child: Icon(Icons.face_retouching_natural,
                 color: AppColors.primary, size: 32),
           ),
           const SizedBox(width: AppSpacing.lg),
@@ -203,11 +208,13 @@ class _ExploreRow extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.route,
+    this.enabled = true,
   });
 
   final String title;
   final String subtitle;
   final String route;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -216,8 +223,12 @@ class _ExploreRow extends StatelessWidget {
           const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       title: Text(title, style: AppTextStyles.title.copyWith(fontSize: 18)),
       subtitle: Text(subtitle, style: AppTextStyles.small),
-      trailing: const Icon(Icons.chevron_right, color: AppColors.textPrimary),
-      onTap: () => Navigator.pushNamed(context, route),
+      trailing: enabled
+          ? Icon(Icons.chevron_right, color: AppColors.textPrimary)
+          : const ComingSoonTag(),
+      onTap: () => enabled
+          ? Navigator.pushNamed(context, route)
+          : showComingSoon(context, title),
     );
   }
 }

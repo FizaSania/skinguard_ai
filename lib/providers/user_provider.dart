@@ -13,6 +13,8 @@ class UserProvider extends ChangeNotifier {
   final ProfileService _profileService;
 
   UserProfile? _user;
+  int? _oilinessBeforeDry;
+  bool _showReactionError = false;
 
   UserProfile? get user => _user;
   bool get isLoggedIn => _user != null;
@@ -48,6 +50,7 @@ class UserProvider extends ChangeNotifier {
   Future<void> logout() async {
     await _auth.logout();
     _user = null;
+    _showReactionError = false;
     notifyListeners();
   }
 
@@ -62,12 +65,28 @@ class UserProvider extends ChangeNotifier {
   }
 
   void setSkinType(SkinType type) {
-    profile.skinType = type;
+    final p = profile;
+    if (type == SkinType.dry && !p.ratesDryness) {
+      // A dry skin type means "not oily"; the old rating returns if the
+      // user switches back.
+      _oilinessBeforeDry = p.oilinessLevel;
+      p.oilinessLevel = 1;
+    } else if (type != SkinType.dry && p.ratesDryness) {
+      p.oilinessLevel = _oilinessBeforeDry ?? 3;
+    }
+    p.skinType = type;
     notifyListeners();
   }
 
-  void setOiliness(int level) {
-    profile.oilinessLevel = level.clamp(1, 5);
+  /// Stores the slider value on the scale matching the selected skin type.
+  void setSkinRating(int level) {
+    final p = profile;
+    final value = level.clamp(1, 5);
+    if (p.ratesDryness) {
+      p.drynessLevel = value;
+    } else {
+      p.oilinessLevel = value;
+    }
     notifyListeners();
   }
 
@@ -102,12 +121,37 @@ class UserProvider extends ChangeNotifier {
   void removeAllergy(String allergy) {
     profile.allergies.removeWhere(
         (a) => a.toLowerCase() == allergy.trim().toLowerCase());
+    if (!profile.hasProductReaction) _clearReactionProduct();
     notifyListeners();
   }
 
   void clearAllergies() {
     profile.allergies.clear();
+    _clearReactionProduct();
     notifyListeners();
+  }
+
+  bool get showReactionProductError =>
+      _showReactionError && (_user?.isReactionProductMissing ?? false);
+
+  void setReactionProduct(String text) {
+    profile.reactionProduct = text;
+    notifyListeners();
+  }
+
+  /// Returns true when the user may leave the allergy step. Otherwise the
+  /// "which product" field shows its validation error.
+  bool validateAllergies() {
+    final p = profile;
+    _showReactionError = p.isReactionProductMissing;
+    if (!_showReactionError) p.reactionProduct = p.reactionProduct.trim();
+    notifyListeners();
+    return !_showReactionError;
+  }
+
+  void _clearReactionProduct() {
+    profile.reactionProduct = '';
+    _showReactionError = false;
   }
 
   void _addAllergy(String allergy) {

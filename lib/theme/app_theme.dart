@@ -32,8 +32,10 @@ class AppRadius {
 class AppTheme {
   AppTheme._();
 
-  static ThemeData light() {
+  /// Builds the theme for the appearance currently set on [AppColors].
+  static ThemeData current() {
     final colorScheme = ColorScheme.fromSeed(
+      brightness: AppColors.isDark ? Brightness.dark : Brightness.light,
       seedColor: AppColors.primary,
       primary: AppColors.primary,
       onPrimary: Colors.white,
@@ -45,7 +47,7 @@ class AppTheme {
 
     final inputBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(AppRadius.md),
-      borderSide: const BorderSide(color: AppColors.border),
+      borderSide: BorderSide(color: AppColors.border),
     );
 
     return ThemeData(
@@ -70,16 +72,16 @@ class AppTheme {
         border: inputBorder,
         enabledBorder: inputBorder,
         focusedBorder: inputBorder.copyWith(
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+          borderSide: BorderSide(color: AppColors.primary, width: 1.5),
         ),
         errorBorder: inputBorder.copyWith(
-          borderSide: const BorderSide(color: AppColors.danger),
+          borderSide: BorderSide(color: AppColors.danger),
         ),
         focusedErrorBorder: inputBorder.copyWith(
-          borderSide: const BorderSide(color: AppColors.danger, width: 1.5),
+          borderSide: BorderSide(color: AppColors.danger, width: 1.5),
         ),
       ),
-      sliderTheme: const SliderThemeData(
+      sliderTheme: SliderThemeData(
         activeTrackColor: AppColors.primary,
         inactiveTrackColor: AppColors.surfaceMuted,
         thumbColor: AppColors.primary,
@@ -101,12 +103,12 @@ class AppTheme {
               ? AppColors.primary
               : Colors.transparent,
         ),
-        side: const BorderSide(color: AppColors.textSecondary, width: 1.4),
+        side: BorderSide(color: AppColors.textSecondary, width: 1.4),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.textPrimary,
+        backgroundColor: AppColors.textOnSkin,
         contentTextStyle: AppTextStyles.body.copyWith(color: Colors.white),
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.sm)),
@@ -118,12 +120,12 @@ class AppTheme {
         titleTextStyle: AppTextStyles.h3,
         contentTextStyle: AppTextStyles.bodySecondary,
       ),
-      bottomSheetTheme: const BottomSheetThemeData(
+      bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
       ),
       dividerTheme:
-          const DividerThemeData(color: AppColors.divider, thickness: 1),
+          DividerThemeData(color: AppColors.divider, thickness: 1),
     );
   }
 }

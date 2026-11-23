@@ -30,6 +30,7 @@ class _RecommendationLoaderState extends State<RecommendationLoader> {
     final signature = [
       profile.skinType?.name,
       ...profile.allergies,
+      profile.reactionProduct,
       result?.scanId,
     ].join('|');
     if (signature == _signature && _future != null) return;

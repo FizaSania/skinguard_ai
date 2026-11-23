@@ -77,7 +77,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
         const SizedBox(height: AppSpacing.lg),
         if (!_sent)
-          const InfoNote(
+          InfoNote(
             icon: Icons.science_outlined,
             color: AppColors.blush,
             foreground: AppColors.clay,

@@ -26,9 +26,13 @@ class AppTextStyles {
   }
 
   static TextStyle _sans(double size, FontWeight weight,
-      {Color color = AppColors.textPrimary, double? height}) {
+      {Color? color, double? height}) {
     final base =
-        TextStyle(fontSize: size, fontWeight: weight, color: color, height: height);
+        TextStyle(
+        fontSize: size,
+        fontWeight: weight,
+        color: color ?? AppColors.textPrimary,
+        height: height);
     return useGoogleFonts ? GoogleFonts.dmSans(textStyle: base) : base;
   }
 

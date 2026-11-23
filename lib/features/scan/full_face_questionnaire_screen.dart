@@ -57,19 +57,19 @@ class _FullFaceQuestionnaireScreenState
         const PageHeading('Full face details',
             subtitle: 'A few questions about your whole face.',
             leading: FaceAvatar()),
-        const SectionTitle('What is your primary skincare goal?'),
+        const SectionTitle('What are your primary skincare goals?',
+            subtitle: 'Select all that apply.'),
         ChoiceGrid<SkincareGoal>(
           options: SkincareGoal.values,
           labelOf: (g) => g.label,
+          multiSelect: true,
           isSelected: a.goals.contains,
           onTap: (g) {
-            a.goals
-              ..clear()
-              ..add(g);
+            a.goals.contains(g) ? a.goals.remove(g) : a.goals.add(g);
             scans.answersChanged();
           },
         ),
-        _error(a.goals.isEmpty, 'Choose your primary goal.'),
+        _error(a.goals.isEmpty, 'Choose at least one goal.'),
         gap,
         const SectionTitle('Do you experience general sensitivity?'),
         _YesNo(

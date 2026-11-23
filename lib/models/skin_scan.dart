@@ -120,21 +120,21 @@ class PatchAnswers {
   final Set<PreviousTreatment> treatments = {};
 
   // Page 2
-  SuspectedProduct? suspectedProduct;
+  final Set<SuspectedProduct> suspectedProducts = {};
   String productName = ''; // optional free text ("Search product")
   final Set<WorseTime> worseTimes = {};
   String finalComment = '';
 
   bool get isPage1Complete => symptoms.isNotEmpty && duration != null;
 
-  bool get isPage2Complete => suspectedProduct != null;
+  bool get isPage2Complete => suspectedProducts.isNotEmpty;
 
   Map<String, dynamic> toJson() => {
         'description': description,
         'symptoms': symptoms.map((s) => s.name).toList(),
         'duration': duration?.name,
         'treatments': treatments.map((t) => t.name).toList(),
-        'suspectedProduct': suspectedProduct?.name,
+        'suspectedProducts': suspectedProducts.map((p) => p.name).toList(),
         'productName': productName,
         'worseTimes': worseTimes.map((w) => w.name).toList(),
         'finalComment': finalComment,

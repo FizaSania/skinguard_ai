@@ -21,35 +21,46 @@ class _AllergiesStepScreenState extends State<AllergiesStepScreen> {
   bool _saving = false;
 
   Future<void> _finish() async {
+    final users = context.read<UserProvider>();
+    if (!users.validateAllergies()) return;
     setState(() => _saving = true);
     // FUTURE DATABASE INTEGRATION: completeOnboarding() saves the profile
     // through ProfileService.
-    await context.read<UserProvider>().completeOnboarding();
+    await users.completeOnboarding();
     if (!mounted) return;
     if (widget.args.editing) {
       showSnack(context, 'Skin profile updated');
       Navigator.popUntil(
-          context, (route) => route.settings.name == AppRoutes.shell);
+        context,
+        (route) => route.settings.name == AppRoutes.shell,
+      );
     } else {
       Navigator.pushNamedAndRemoveUntil(
-          context, AppRoutes.shell, (route) => false);
+        context,
+        AppRoutes.shell,
+        (route) => false,
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return PageLayout(
-      bottom: PrimaryButton(
+    return AllergyStepGuard(
+      child: PageLayout(
+        bottom: PrimaryButton(
           label: widget.args.editing ? 'Save' : 'Finish',
           isLoading: _saving,
-          onPressed: _finish),
-      children: const [
-        StepProgress(step: 3, total: 3, caption: 'Profile setup'),
-        PageHeading('Allergies',
-            subtitle:
-                'Do you have any known allergies? We will avoid these in your recommendations.'),
-        AllergySelector(),
-      ],
+          onPressed: _finish,
+        ),
+        children: const [
+          StepProgress(step: 3, total: 3, caption: 'Profile setup'),
+          PageHeading(
+            'Allergies',
+            subtitle: 'Do you have any known allergies? We will avoid these in your recommendations.',
+          ),
+          AllergySelector(),
+        ],
+      ),
     );
   }
 }

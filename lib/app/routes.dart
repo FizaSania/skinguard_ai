@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/config/feature_flags.dart';
+import '../core/widgets/coming_soon.dart';
 import '../features/allergies/my_allergies_screen.dart';
 import '../features/analysis/analyzing_screen.dart';
 import '../features/analysis/result_details_screen.dart';
@@ -23,6 +25,7 @@ import '../features/scan/patch_details_page1_screen.dart';
 import '../features/scan/patch_details_page2_screen.dart';
 import '../features/scan/photo_review_screen.dart';
 import '../features/scan/scan_selection_screen.dart';
+import '../features/settings/settings_screen.dart';
 import '../features/splash/splash_screen.dart';
 import '../models/skin_scan.dart';
 
@@ -59,6 +62,7 @@ class AppRoutes {
   static const lifestyle = '/lifestyle';
   static const planner = '/planner';
   static const compareScans = '/planner/compare';
+  static const settings = '/settings';
 }
 
 /// Arguments for onboarding screens. `editing` is true when re-opened from
@@ -81,6 +85,12 @@ class AppRouter {
     final args = settings.arguments;
     final onboarding =
         args is OnboardingArgs ? args : const OnboardingArgs();
+
+    // Hidden FYP-2 pages stay registered below; see FeatureFlags.
+    if (!FeatureFlags.isRouteEnabled(settings.name)) {
+      return MaterialPageRoute(
+          builder: (_) => const ComingSoonScreen(), settings: settings);
+    }
 
     Widget page;
     switch (settings.name) {
@@ -133,6 +143,8 @@ class AppRouter {
         page = const PlannerScreen();
       case AppRoutes.compareScans:
         page = const CompareScansScreen();
+      case AppRoutes.settings:
+        page = const SettingsScreen();
       default:
         page = const _UnknownRouteScreen();
     }

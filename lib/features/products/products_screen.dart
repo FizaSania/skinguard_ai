@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../app/routes.dart';
+import '../../core/config/feature_flags.dart';
 import '../../core/utils/navigation.dart';
 import '../../core/widgets/buttons.dart';
 import '../../core/widgets/illustrations.dart';
@@ -33,6 +34,7 @@ class ProductsScreen extends StatelessWidget {
           children: [
             PrimaryButton(
               label: 'Next: Lifestyle Guide',
+              comingSoon: !FeatureFlags.lifestyle,
               onPressed: () =>
                   Navigator.pushNamed(context, AppRoutes.lifestyle),
             ),
@@ -67,7 +69,7 @@ class ProductsScreen extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: AppSpacing.lg),
                 child: ProductCard(rec: rec),
               ),
-          const InfoNote(
+          InfoNote(
             icon: Icons.health_and_safety_outlined,
             color: AppColors.blush,
             foreground: AppColors.clay,

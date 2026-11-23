@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../theme/app_theme.dart';
+import 'coming_soon.dart';
 
 /// Filled, full-width pill button.
 class PrimaryButton extends StatelessWidget {
@@ -12,24 +13,29 @@ class PrimaryButton extends StatelessWidget {
     required this.onPressed,
     this.isLoading = false,
     this.icon,
-    this.color = AppColors.primary,
+    this.color,
     this.height = 56,
+    this.comingSoon = false,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final bool isLoading;
+
+  /// Disables the button and shows a "Coming Soon" tag beside the label.
+  final bool comingSoon;
   final IconData? icon;
-  final Color color;
+  final Color? color;
   final double height;
 
   @override
   Widget build(BuildContext context) {
+    final color = this.color ?? AppColors.primary;
     return SizedBox(
       width: double.infinity,
       height: height,
       child: FilledButton(
-        onPressed: isLoading ? null : onPressed,
+        onPressed: isLoading || comingSoon ? null : onPressed,
         style: FilledButton.styleFrom(
           backgroundColor: color,
           disabledBackgroundColor: color.withValues(alpha: 0.45),
@@ -46,7 +52,19 @@ class PrimaryButton extends StatelessWidget {
                 child: CircularProgressIndicator(
                     strokeWidth: 2.4, color: Colors.white),
               )
-            : _ButtonContent(label: label, icon: icon, color: Colors.white),
+            : comingSoon
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: _ButtonContent(
+                            label: label, icon: icon, color: Colors.white),
+                      ),
+                      const SizedBox(width: 8),
+                      const ComingSoonTag(),
+                    ],
+                  )
+                : _ButtonContent(label: label, icon: icon, color: Colors.white),
       ),
     );
   }
@@ -59,7 +77,7 @@ class SecondaryButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.icon,
-    this.color = AppColors.primary,
+    this.color,
     this.height = 56,
     this.isLoading = false,
   });
@@ -67,12 +85,13 @@ class SecondaryButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
-  final Color color;
+  final Color? color;
   final double height;
   final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
+    final color = this.color ?? AppColors.primary;
     return SizedBox(
       width: double.infinity,
       height: height,
@@ -123,7 +142,7 @@ class ToolButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           backgroundColor: AppColors.surface,
           foregroundColor: AppColors.textPrimary,
-          side: const BorderSide(color: AppColors.border),
+          side: BorderSide(color: AppColors.border),
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.md)),
         ),

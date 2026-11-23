@@ -48,7 +48,8 @@ class _PatchDetailsPage2ScreenState extends State<PatchDetailsPage2Screen> {
         const PageHeading('Patch details',
             subtitle: 'Page 2 of 2 · Triggers and timing.'),
         const SectionTitle(
-            'Did this patch appear after using a specific product?'),
+            'Did this patch appear after using a specific product?',
+            subtitle: 'Select all that apply.'),
         // FUTURE BACKEND INTEGRATION: turn this into a search against the
         // product catalogue API with suggestions.
         AppTextField(
@@ -64,13 +65,24 @@ class _PatchDetailsPage2ScreenState extends State<PatchDetailsPage2Screen> {
         ChoiceGrid<SuspectedProduct>(
           options: SuspectedProduct.values,
           labelOf: (p) => p.label,
-          isSelected: (p) => a.suspectedProduct == p,
+          multiSelect: true,
+          isSelected: a.suspectedProducts.contains,
           onTap: (p) {
-            a.suspectedProduct = p;
+            // "No product" is exclusive with the other options.
+            if (p == SuspectedProduct.noProduct) {
+              final wasSelected = a.suspectedProducts.contains(p);
+              a.suspectedProducts.clear();
+              if (!wasSelected) a.suspectedProducts.add(p);
+            } else {
+              a.suspectedProducts.remove(SuspectedProduct.noProduct);
+              a.suspectedProducts.contains(p)
+                  ? a.suspectedProducts.remove(p)
+                  : a.suspectedProducts.add(p);
+            }
             scans.answersChanged();
           },
         ),
-        if (_submitted && a.suspectedProduct == null)
+        if (_submitted && a.suspectedProducts.isEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 6),
             child: Text('Choose an option (or "No product").',

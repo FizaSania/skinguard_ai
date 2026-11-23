@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../app/routes.dart';
+import '../../core/config/feature_flags.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/buttons.dart';
+import '../../core/widgets/coming_soon.dart';
 import '../../core/widgets/layout.dart';
 import '../../core/widgets/scan_image_view.dart';
 import '../../core/widgets/selection.dart';
@@ -12,6 +14,7 @@ import '../../providers/scan_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../theme/app_theme.dart';
+import 'widgets/concern_insights.dart';
 
 /// Skin Analysis result for one scan (latest scan when [scanId] is null).
 /// All values come from the scan's [AnalysisResult] – never from widgets.
@@ -124,28 +127,41 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   path: image.path,
                   isSample: image.isSample,
                   quarterTurns: image.quarterTurns,
-                  overlay: _view == 1 ? const DemoHeatmapOverlay() : null,
+                  overlay: _view == 1 && FeatureFlags.heatmap
+                      ? const DemoHeatmapOverlay()
+                      : null,
                 ),
         ),
         const SizedBox(height: AppSpacing.md),
         SegmentedToggle(
           labels: const ['Original', 'Heatmap'],
           selectedIndex: _view,
-          onChanged: (i) => setState(() => _view = i),
+          comingSoon: FeatureFlags.heatmap ? const {} : const {1},
+          onChanged: (i) {
+            if (i == 1 && !FeatureFlags.heatmap) {
+              showComingSoon(context, 'Heatmap');
+              return;
+            }
+            setState(() => _view = i);
+          },
         ),
         const SizedBox(height: AppSpacing.lg),
         ResultStats(finding: finding),
         const SizedBox(height: AppSpacing.lg),
-        AppCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Why this result?', style: AppTextStyles.title),
-              const SizedBox(height: 8),
-              Text(finding.explanation, style: AppTextStyles.body),
-            ],
-          ),
-        ),
+        ConcernInsights(finding: finding),
+        if (FeatureFlags.whyThisResult)
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Why this result?', style: AppTextStyles.title),
+                const SizedBox(height: 8),
+                Text(finding.explanation, style: AppTextStyles.body),
+              ],
+            ),
+          )
+        else
+          const ComingSoonCard(title: 'Why this result?'),
         const SizedBox(height: AppSpacing.lg),
         const ConsultDermatologistLink(),
       ],
@@ -228,6 +244,16 @@ class ConsultDermatologistLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The link leads to the Lifestyle guide, so it follows that feature's flag.
+    if (!FeatureFlags.lifestyle) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Text(
+          'Want a professional opinion? Consult a dermatologist',
+          style: AppTextStyles.label.copyWith(color: AppColors.primary),
+        ),
+      );
+    }
     return InkWell(
       onTap: () => Navigator.pushNamed(context, AppRoutes.lifestyle),
       child: Padding(

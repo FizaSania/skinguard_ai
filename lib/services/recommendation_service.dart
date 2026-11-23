@@ -39,13 +39,16 @@ class MockRecommendationService implements RecommendationService {
       ...?result?.concerns.where((c) => c != primary?.concern),
     ];
 
-    final avoid = avoidTermsFor(profile.allergies);
+    final avoid = avoidTermsFor(profile.allergies,
+        reactionProduct: profile.reactionProduct);
     final skinType = profile.skinType?.label;
 
     final excluded = <Product>[];
     final eligible = <Product>[];
     for (final product in MockProducts.all) {
-      if (_containsAvoided(product, profile.allergies)) {
+      if (matchingAllergies(product, profile.allergies,
+              reactionProduct: profile.reactionProduct)
+          .isNotEmpty) {
         excluded.add(product);
         continue;
       }
@@ -57,12 +60,17 @@ class MockRecommendationService implements RecommendationService {
     }
     eligible.sort((a, b) => a.category.index.compareTo(b.category.index));
 
+    final stage = _stageFor(result);
+    final selected = eligible.take(_productCountFor(stage)).toList();
+
     final recommendations = [
-      for (final product in eligible)
+      for (final product in selected)
         Recommendation(
           concern: _matchingConcern(product, concerns) ?? 'General care',
           product: product,
           reason: _reasonFor(product, concerns, skinType),
+          conflicts: _conflictsFor(product, profile.skinType),
+          pairings: _pairingsFor(product, selected),
         ),
     ];
 
@@ -80,23 +88,25 @@ class MockRecommendationService implements RecommendationService {
       ingredientsToAvoid: avoid,
       excludedProducts: excluded,
       isDemo: true,
+      stage: stage,
+      doctorAdvice: _doctorAdviceFor(stage, result),
     );
   }
 
   /// Ingredient-related allergies (predefined) plus any custom allergies,
   /// listed exactly as the user typed them.
-  static List<String> avoidTermsFor(List<String> allergies) => [
+  static List<String> avoidTermsFor(List<String> allergies,
+          {String reactionProduct = ''}) =>
+      [
         for (final allergy in allergies)
           if (!MockRecommendationData.nonIngredientAllergies.contains(allergy))
             allergy,
+        if (reactionProduct.trim().isNotEmpty) reactionProduct.trim(),
       ];
 
-  static bool _containsAvoided(Product product, List<String> allergies) =>
-      matchingAllergies(product, allergies).isNotEmpty;
-
-  /// The user's allergies that match an ingredient name in [product].
-  static List<String> matchingAllergies(
-      Product product, List<String> allergies) {
+  /// The user's allergies (and reaction product) that match [product].
+  static List<String> matchingAllergies(Product product, List<String> allergies,
+      {String reactionProduct = ''}) {
     final ingredients =
         product.allIngredients.map((i) => i.toLowerCase()).toList();
     final matches = <String>[];
@@ -112,7 +122,93 @@ class MockRecommendationService implements RecommendationService {
       });
       if (hit) matches.add(allergy);
     }
+    if (_matchesReactionProduct(product, ingredients, reactionProduct)) {
+      matches.add(reactionProduct.trim());
+    }
     return matches;
+  }
+
+  /// The typed text may be a product name or an ingredient. Names need a
+  /// full match so that "oil" does not hide "Oil-Free Gel Moisturizer".
+  static bool _matchesReactionProduct(
+      Product product, List<String> ingredients, String reactionProduct) {
+    final term = reactionProduct.trim().toLowerCase();
+    if (term.isEmpty) return false;
+    if (term.contains(product.name.toLowerCase())) return true;
+    return ingredients.any((i) => i == term || (term.length >= 3 && i.contains(term)));
+  }
+
+  static RecommendationStage _stageFor(AnalysisResult? result) {
+    if (result == null || result.findings.isEmpty) {
+      return RecommendationStage.notNeeded;
+    }
+    final stages = result.findings.map((f) => switch (f.kind) {
+          ConcernKind.acne => switch (f.acne?.severity?.toLowerCase()) {
+              'severe' => RecommendationStage.urgent,
+              'moderate' => RecommendationStage.recommended,
+              _ => RecommendationStage.optional,
+            },
+          ConcernKind.redness ||
+          ConcernKind.pigmentation =>
+            RecommendationStage.recommended,
+          ConcernKind.other => RecommendationStage.optional,
+        });
+    return stages.reduce((a, b) => a.index >= b.index ? a : b);
+  }
+
+  static int _productCountFor(RecommendationStage stage) => switch (stage) {
+        RecommendationStage.notNeeded || RecommendationStage.optional => 1,
+        RecommendationStage.recommended || RecommendationStage.urgent => 3,
+      };
+
+  static DoctorAdvice? _doctorAdviceFor(
+      RecommendationStage stage, AnalysisResult? result) {
+    final needsDoctor = result?.findings.any((f) =>
+            f.kind == ConcernKind.redness ||
+            f.kind == ConcernKind.pigmentation) ??
+        false;
+    return switch (stage) {
+      RecommendationStage.notNeeded => null,
+      RecommendationStage.optional => const DoctorAdvice(
+          message: 'A dermatologist visit is optional. Consider one if the '
+              'concern worries you.',
+          referralStatus: 'Optional',
+        ),
+      RecommendationStage.recommended => DoctorAdvice(
+          message: 'Consider consulting a dermatologist for professional '
+              'skin assessment.',
+          referralStatus: needsDoctor ? 'Recommended' : 'Optional',
+        ),
+      RecommendationStage.urgent => const DoctorAdvice(
+          message: 'Please consult a dermatologist soon for a professional '
+              'skin assessment.',
+          referralStatus: 'Recommended',
+        ),
+    };
+  }
+
+  static List<IngredientConflict> _conflictsFor(
+      Product product, SkinType? skinType) {
+    final ingredients =
+        product.allIngredients.map((i) => i.toLowerCase()).toSet();
+    return [
+      for (final rule in MockRecommendationData.conflicts)
+        if (rule.skinType == skinType &&
+            ingredients.contains(rule.ingredient.toLowerCase()))
+          IngredientConflict(level: rule.level, message: rule.message),
+    ];
+  }
+
+  /// Combinations of [product] with the other products selected for the user.
+  static List<String> _pairingsFor(Product product, List<Product> selected) {
+    final pairings = <String>{};
+    for (final other in selected) {
+      if (other.category == product.category) continue;
+      final pair = [product.category, other.category]
+        ..sort((a, b) => a.index.compareTo(b.index));
+      pairings.add('${pair.first.label} + ${pair.last.label}');
+    }
+    return pairings.toList();
   }
 
   static String? _matchingConcern(Product product, List<String> concerns) {
@@ -126,10 +222,13 @@ class MockRecommendationService implements RecommendationService {
       Product product, List<String> concerns, String? skinType) {
     final concern = _matchingConcern(product, concerns);
     if (concern == null) {
-      return 'A gentle everyday option suited to your skin profile.';
+      return 'This ${product.category.label.toLowerCase()} is selected based '
+          'on your skin profile.';
     }
-    final skin = skinType == null ? '' : ' and your ${skinType.toLowerCase()} skin type';
-    return 'Recommended because it matches your detected concern '
-        '(${concern.toLowerCase()})$skin, plus your questionnaire responses.';
+    final skin = skinType == null || skinType == 'Not sure'
+        ? ''
+        : ' and ${skinType.toLowerCase()} skin type';
+    return 'This ${product.category.label.toLowerCase()} is selected based on '
+        'your ${concern.toLowerCase()} concern$skin.';
   }
 }

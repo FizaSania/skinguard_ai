@@ -132,7 +132,7 @@ class RecommendationsScreen extends StatelessWidget {
               ),
           ],
           const SizedBox(height: AppSpacing.xl),
-          const InfoNote(
+          InfoNote(
             icon: Icons.health_and_safety_outlined,
             color: AppColors.blush,
             foreground: AppColors.clay,

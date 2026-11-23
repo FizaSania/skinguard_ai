@@ -195,7 +195,7 @@ class _ModeCard extends StatelessWidget {
       selected: selected,
       button: true,
       child: Material(
-        color: selected ? Colors.white : AppColors.blushLight,
+        color: selected ? AppColors.surfaceRaised : AppColors.blushLight,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
           side: BorderSide(

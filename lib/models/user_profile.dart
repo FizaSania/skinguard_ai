@@ -38,12 +38,15 @@ const List<String> kPredefinedAllergies = [
   'Fragrance',
   'Dust allergy',
   'Pet fur allergy',
-  'Salicylic Acid',
   'Pollen allergy',
   'Food allergy',
   'Essential oils',
   'Skincare product reaction',
 ];
+
+/// Selecting this allergy requires naming the product in
+/// [UserProfile.reactionProduct].
+const String kProductReactionAllergy = 'Skincare product reaction';
 
 /// Everything we know about the user. Kept as a plain model with
 /// `toJson` so it can be persisted later.
@@ -61,8 +64,10 @@ class UserProfile {
     this.location = '',
     this.skinType,
     this.oilinessLevel = 3,
+    this.drynessLevel = 3,
     Set<DailyHabit>? habits,
     List<String>? allergies,
+    this.reactionProduct = '',
     this.onboardingComplete = false,
   })  : habits = habits ?? <DailyHabit>{},
         allergies = allergies ?? <String>[];
@@ -80,10 +85,14 @@ class UserProfile {
   // Step 2 – skin type & habits
   SkinType? skinType;
   int oilinessLevel; // 1 (not oily) – 5 (very oily)
+  int drynessLevel; // 1 (not dry) – 5 (very dry)
   final Set<DailyHabit> habits;
 
   // Step 3 – allergies (predefined labels and/or custom text)
   final List<String> allergies;
+
+  /// Product or ingredient behind a "Skincare product reaction".
+  String reactionProduct;
 
   bool onboardingComplete;
 
@@ -92,6 +101,14 @@ class UserProfile {
     if (trimmed.isEmpty) return '';
     return trimmed.split(RegExp(r'\s+')).first;
   }
+
+  /// Dry skin is rated on a dryness scale; every other type on oiliness.
+  bool get ratesDryness => skinType == SkinType.dry;
+
+  bool get hasProductReaction => allergies.contains(kProductReactionAllergy);
+
+  bool get isReactionProductMissing =>
+      hasProductReaction && reactionProduct.trim().isEmpty;
 
   bool isCustomAllergy(String allergy) =>
       !kPredefinedAllergies.contains(allergy);
@@ -106,8 +123,10 @@ class UserProfile {
         'location': location,
         'skinType': skinType?.name,
         'oilinessLevel': oilinessLevel,
+        'drynessLevel': drynessLevel,
         'habits': habits.map((h) => h.name).toList(),
         'allergies': allergies,
+        'reactionProduct': hasProductReaction ? reactionProduct.trim() : null,
         'onboardingComplete': onboardingComplete,
       };
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../theme/app_theme.dart';
+import 'coming_soon.dart';
 
 /// Card-style radio (single) or checkbox (multi) option from the design.
 class ChoiceTile extends StatelessWidget {
@@ -78,7 +79,7 @@ class _RadioMark extends StatelessWidget {
           ? Container(
               width: 12,
               height: 12,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                   shape: BoxShape.circle, color: AppColors.primary),
             )
           : null,
@@ -162,11 +163,18 @@ class SegmentedToggle extends StatelessWidget {
     required this.labels,
     required this.selectedIndex,
     required this.onChanged,
+    this.comingSoon = const {},
   });
 
   final List<String> labels;
   final int selectedIndex;
+
+  /// Called for every tap, including tabs listed in [comingSoon] so the
+  /// caller can explain why they do not open.
   final ValueChanged<int> onChanged;
+
+  /// Indexes of tabs that show a "Coming Soon" tag.
+  final Set<int> comingSoon;
 
   @override
   Widget build(BuildContext context) {
@@ -193,17 +201,25 @@ class SegmentedToggle extends StatelessWidget {
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
-                  child: Text(
-                    labels[i],
-                    style: AppTextStyles.label.copyWith(
-                      fontSize: 16,
-                      color: i == selectedIndex
-                          ? AppColors.textPrimary
-                          : AppColors.textSecondary,
-                      fontWeight: i == selectedIndex
-                          ? FontWeight.w700
-                          : FontWeight.w500,
-                    ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        labels[i],
+                        style: AppTextStyles.label.copyWith(
+                          fontSize: comingSoon.contains(i) ? 14 : 16,
+                          color: i == selectedIndex
+                              ? AppColors.textPrimary
+                              : AppColors.textSecondary,
+                          fontWeight: i == selectedIndex
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                        ),
+                      ),
+                      if (comingSoon.contains(i))
+                        const ComingSoonTag(compact: true),
+                    ],
                   ),
                 ),
               ),
@@ -271,29 +287,36 @@ class TagChip extends StatelessWidget {
     super.key,
     required this.label,
     this.icon,
-    this.background = AppColors.primarySoft,
-    this.foreground = AppColors.textPrimary,
+    this.background,
+    this.foreground,
     this.onDeleted,
-  });
+  }) : _negative = false;
 
   const TagChip.positive({super.key, required this.label, this.onDeleted})
       : icon = Icons.check,
-        background = AppColors.primarySoft,
-        foreground = AppColors.textPrimary;
+        background = null,
+        foreground = null,
+        _negative = false;
 
   const TagChip.negative({super.key, required this.label, this.onDeleted})
       : icon = Icons.close,
-        background = AppColors.dangerSoft,
-        foreground = AppColors.danger;
+        background = null,
+        foreground = null,
+        _negative = true;
 
   final String label;
   final IconData? icon;
-  final Color background;
-  final Color foreground;
+  final Color? background;
+  final Color? foreground;
   final VoidCallback? onDeleted;
+  final bool _negative;
 
   @override
   Widget build(BuildContext context) {
+    final background = this.background ??
+        (_negative ? AppColors.dangerSoft : AppColors.primarySoft);
+    final foreground = this.foreground ??
+        (_negative ? AppColors.danger : AppColors.textPrimary);
     return Container(
       padding: EdgeInsets.only(
           left: 14, right: onDeleted == null ? 14 : 6, top: 8, bottom: 8),

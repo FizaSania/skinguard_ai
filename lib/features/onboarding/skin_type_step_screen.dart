@@ -37,6 +37,9 @@ class _SkinTypeStepScreenState extends State<SkinTypeStepScreen> {
   Widget build(BuildContext context) {
     final users = context.watch<UserProvider>();
     final profile = users.profile;
+    final ratesDryness = profile.ratesDryness;
+    final ratingWord = ratesDryness ? 'dry' : 'oily';
+    final rating = ratesDryness ? profile.drynessLevel : profile.oilinessLevel;
 
     return PageLayout(
       bottom: PrimaryButton(label: 'Next', onPressed: _next),
@@ -61,25 +64,25 @@ class _SkinTypeStepScreenState extends State<SkinTypeStepScreen> {
           ),
         const SizedBox(height: AppSpacing.xl + 4),
         SectionTitle(
-          'How oily does your skin usually feel?',
-          trailing: Text('${profile.oilinessLevel}',
+          'How $ratingWord does your skin usually feel?',
+          trailing: Text('$rating',
               style: AppTextStyles.h3.copyWith(color: AppColors.primary)),
         ),
         Slider(
-          value: profile.oilinessLevel.toDouble(),
+          value: rating.toDouble(),
           min: 1,
           max: 5,
           divisions: 4,
-          label: '${profile.oilinessLevel}',
-          onChanged: (v) => users.setOiliness(v.round()),
+          label: '$rating',
+          onChanged: (v) => users.setSkinRating(v.round()),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('1 · Not oily', style: AppTextStyles.small),
-              Text('5 · Very oily', style: AppTextStyles.small),
+              Text('1 · Not $ratingWord', style: AppTextStyles.small),
+              Text('5 · Very $ratingWord', style: AppTextStyles.small),
             ],
           ),
         ),

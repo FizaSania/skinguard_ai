@@ -37,7 +37,7 @@ class MockProducts {
       description:
           'A water-light gel moisturiser that hydrates without feeling heavy.',
       howToUse: 'Apply a pea-sized amount after cleansing.',
-      suitableConcerns: {'Acne', 'Enlarged pores', 'Hyperpigmentation', 'Dryness'},
+      suitableConcerns: {'Acne', 'Enlarged pores', 'Pigmentation', 'Redness', 'Dryness'},
       suitableSkinTypes: {'Oily', 'Combination', 'Normal', 'Sensitive', 'Not sure'},
       accentColor: Color(0xFFC0764A),
     ),
@@ -52,7 +52,7 @@ class MockProducts {
       description: 'A broad-spectrum daily sunscreen with no added fragrance.',
       howToUse:
           'Apply generously as the last step of your morning routine and reapply every 2 hours outdoors.',
-      suitableConcerns: {'Acne', 'Hyperpigmentation', 'Enlarged pores', 'Dryness'},
+      suitableConcerns: {'Acne', 'Pigmentation', 'Redness', 'Enlarged pores', 'Dryness'},
       suitableSkinTypes: {'Oily', 'Dry', 'Combination', 'Normal', 'Sensitive', 'Not sure'},
       accentColor: Color(0xFFB8902E),
     ),
@@ -78,7 +78,7 @@ class MockProducts {
       reason: 'Targets uneven tone and visible redness from past breakouts.',
       description: 'A gentle serum aimed at uneven tone and post-blemish marks.',
       howToUse: 'Apply a thin layer in the evening before moisturiser.',
-      suitableConcerns: {'Hyperpigmentation', 'Acne'},
+      suitableConcerns: {'Pigmentation', 'Redness', 'Acne'},
       suitableSkinTypes: {'Oily', 'Combination', 'Normal', 'Not sure'},
       accentColor: Color(0xFF8C6BAA),
     ),

@@ -5,13 +5,14 @@ import '../../theme/app_text_styles.dart';
 
 /// Shield-with-leaf mark used in headers.
 class ShieldLogo extends StatelessWidget {
-  const ShieldLogo({super.key, this.size = 26, this.color = AppColors.primary});
+  const ShieldLogo({super.key, this.size = 26, this.color});
 
   final double size;
-  final Color color;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
+    final color = this.color ?? AppColors.primary;
     return SizedBox(
       width: size,
       height: size,
@@ -31,22 +32,22 @@ class ShieldLogo extends StatelessWidget {
 
 /// "🛡 SkinGuard AI" brand row shown at the top of most screens.
 class BrandTitle extends StatelessWidget {
-  const BrandTitle({super.key, this.color = AppColors.textPrimary});
+  const BrandTitle({super.key, this.color});
 
-  final Color color;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        ShieldLogo(
-            size: 24,
-            color: color == AppColors.textPrimary ? AppColors.primary : color),
+        ShieldLogo(size: 24, color: color),
         const SizedBox(width: 10),
         Text('SkinGuard AI',
             style: AppTextStyles.title.copyWith(
-                color: color, fontWeight: FontWeight.w700, fontSize: 17)),
+                color: color ?? AppColors.textPrimary,
+                fontWeight: FontWeight.w700,
+                fontSize: 17)),
       ],
     );
   }

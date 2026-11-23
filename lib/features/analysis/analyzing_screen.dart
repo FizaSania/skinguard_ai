@@ -191,11 +191,11 @@ class _ProgressRing extends StatelessWidget {
           Container(
             width: 170,
             height: 170,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
                 color: AppColors.primarySoft, shape: BoxShape.circle),
             child: Center(
               child: error
-                  ? const Icon(Icons.error_outline,
+                  ? Icon(Icons.error_outline,
                       size: 56, color: AppColors.danger)
                   : const ShieldLogo(size: 64),
             ),
@@ -217,16 +217,16 @@ class _StageRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Widget indicator = switch (state) {
-      _StageState.done => const CircleAvatar(
+      _StageState.done => CircleAvatar(
           radius: 13,
           backgroundColor: AppColors.primary,
           child: Icon(Icons.check, size: 16, color: Colors.white)),
-      _StageState.active => const SizedBox(
+      _StageState.active => SizedBox(
           width: 26,
           height: 26,
           child: CircularProgressIndicator(
               strokeWidth: 3, color: AppColors.primary)),
-      _StageState.failed => const Icon(Icons.cancel,
+      _StageState.failed => Icon(Icons.cancel,
           color: AppColors.danger, size: 28),
       _StageState.pending => Container(
           width: 26,

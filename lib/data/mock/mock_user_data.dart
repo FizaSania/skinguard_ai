@@ -22,7 +22,7 @@ class MockUserData {
         skinType: SkinType.oily,
         oilinessLevel: 4,
         habits: {DailyHabit.poorSleep, DailyHabit.sunExposure},
-        allergies: ['Fragrance', 'Salicylic Acid'],
+        allergies: ['Fragrance'],
         onboardingComplete: true,
       );
 }

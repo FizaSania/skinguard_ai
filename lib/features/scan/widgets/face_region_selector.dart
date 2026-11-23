@@ -111,7 +111,7 @@ class _RegionOval extends StatelessWidget {
                 style: AppTextStyles.small.copyWith(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: selected ? Colors.white : AppColors.textPrimary,
+                  color: selected ? Colors.white : AppColors.textOnSkin,
                 ),
               ),
             ),

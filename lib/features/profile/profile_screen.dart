@@ -189,7 +189,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const Divider(height: 1),
                   ListTile(
                     leading:
-                        const Icon(Icons.logout_rounded, color: AppColors.danger),
+                        Icon(Icons.logout_rounded, color: AppColors.danger),
                     title: Text('Log out',
                         style: AppTextStyles.body
                             .copyWith(color: AppColors.danger)),

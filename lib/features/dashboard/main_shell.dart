@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../app/routes.dart';
+import '../../core/config/feature_flags.dart';
+import '../../core/widgets/coming_soon.dart';
 import '../../providers/plan_provider.dart';
 import '../../providers/scan_provider.dart';
 import '../../theme/app_colors.dart';
@@ -60,7 +62,7 @@ class _MainShellState extends State<MainShell> {
         ],
       ),
       bottomNavigationBar: DecoratedBox(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           border: Border(top: BorderSide(color: AppColors.border)),
         ),
         child: NavigationBarTheme(
@@ -76,11 +78,13 @@ class _MainShellState extends State<MainShell> {
             onDestinationSelected: (i) {
               if (i == 1) {
                 _startAnalysis();
+              } else if (i == 2 && !FeatureFlags.history) {
+                showComingSoon(context, 'History');
               } else {
                 _selectTab(i == 0 ? 0 : i - 1);
               }
             },
-            destinations: const [
+            destinations: [
               NavigationDestination(
                   icon: Icon(Icons.home_outlined),
                   selectedIcon: Icon(Icons.home_rounded),
@@ -89,7 +93,20 @@ class _MainShellState extends State<MainShell> {
                   icon: Icon(Icons.face_retouching_natural_outlined),
                   label: 'Analyze'),
               NavigationDestination(
-                  icon: Icon(Icons.history_rounded), label: 'History'),
+                  icon: FeatureFlags.history
+                      ? const Icon(Icons.history_rounded)
+                      : const Stack(
+                          clipBehavior: Clip.none,
+                          alignment: Alignment.center,
+                          children: [
+                            Icon(Icons.history_rounded),
+                            Positioned(
+                              top: -15,
+                              child: ComingSoonTag(compact: true),
+                            ),
+                          ],
+                        ),
+                  label: 'History'),
               NavigationDestination(
                   icon: Icon(Icons.person_outline_rounded),
                   selectedIcon: Icon(Icons.person_rounded),

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../app/routes.dart';
+import '../../core/config/feature_flags.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/widgets/coming_soon.dart';
 import '../../core/widgets/layout.dart';
 import '../../models/skin_scan.dart';
 import '../../providers/scan_provider.dart';
@@ -44,7 +46,7 @@ class ResultDetailsScreen extends StatelessWidget {
             style: AppTextStyles.small),
         const SizedBox(height: AppSpacing.xl),
         if (result.isDemo) ...[
-          const InfoNote(
+          InfoNote(
             icon: Icons.science_outlined,
             color: AppColors.blush,
             foreground: AppColors.clay,
@@ -64,37 +66,54 @@ class ResultDetailsScreen extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(child: Text(f.concern, style: AppTextStyles.h3)),
-                      Text('${f.confidencePercent}%',
-                          style: AppTextStyles.h3
-                              .copyWith(color: AppColors.primary)),
+                      if (FeatureFlags.resultInsights)
+                        Text('${f.confidencePercent}%',
+                            style: AppTextStyles.h3
+                                .copyWith(color: AppColors.primary)),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text('Region: ${f.regionLabel}', style: AppTextStyles.small),
-                  const SizedBox(height: 8),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                    child: LinearProgressIndicator(
-                      value: f.confidence,
-                      minHeight: 6,
-                      color: AppColors.primary,
-                      backgroundColor: AppColors.surfaceMuted,
+                  if (FeatureFlags.resultInsights) ...[
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      child: LinearProgressIndicator(
+                        value: f.confidence,
+                        minHeight: 6,
+                        color: AppColors.primary,
+                        backgroundColor: AppColors.surfaceMuted,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(f.explanation, style: AppTextStyles.body),
+                    const SizedBox(height: 10),
+                    Text(f.explanation, style: AppTextStyles.body),
+                  ] else ...[
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text('Explanation and confidence',
+                              style: AppTextStyles.small),
+                        ),
+                        const ComingSoonTag(),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
           ),
         const SizedBox(height: AppSpacing.md),
-        const SectionTitle('Understanding confidence'),
-        Text(
-          'Confidence shows how strongly the image matches patterns the model '
-          'has learned for a concern. It is not the probability that you have a '
-          'condition, and it is not a medical diagnosis.',
-          style: AppTextStyles.bodySecondary,
-        ),
+        if (FeatureFlags.resultInsights) ...[
+          const SectionTitle('Understanding confidence'),
+          Text(
+            'Confidence shows how strongly the image matches patterns the model '
+            'has learned for a concern. It is not the probability that you have a '
+            'condition, and it is not a medical diagnosis.',
+            style: AppTextStyles.bodySecondary,
+          ),
+        ] else
+          const ComingSoonCard(title: 'Understanding confidence'),
         const SizedBox(height: AppSpacing.xl),
         const SectionTitle('What you told us'),
         AppCard(child: _AnswersSummary(session: session)),
@@ -105,16 +124,19 @@ class ResultDetailsScreen extends StatelessWidget {
           child: Column(
             children: [
               _NextStep(Icons.recommend_outlined, 'Recommended for you',
-                  AppRoutes.recommendations),
+                  AppRoutes.recommendations,
+                  enabled: FeatureFlags.recommendations),
               const Divider(height: 1),
               _NextStep(Icons.spa_outlined, 'Products & ingredients',
                   AppRoutes.products),
               const Divider(height: 1),
               _NextStep(Icons.self_improvement_outlined, 'Lifestyle guide',
-                  AppRoutes.lifestyle),
+                  AppRoutes.lifestyle,
+                  enabled: FeatureFlags.lifestyle),
               const Divider(height: 1),
               _NextStep(Icons.checklist_rounded, 'My plan & tracker',
-                  AppRoutes.planner),
+                  AppRoutes.planner,
+                  enabled: FeatureFlags.planner),
             ],
           ),
         ),
@@ -141,7 +163,7 @@ class _AnswersSummary extends StatelessWidget {
     if (session.type == ScanType.fullFace) {
       final a = session.fullFaceAnswers;
       rows.addAll([
-        ('Goal', a.goals.map((g) => g.label).join(', ')),
+        ('Goals', a.goals.map((g) => g.label).join(', ')),
         ('Sensitivity', _yesNo(a.generalSensitivity)),
         ('Daily sunscreen', _yesNo(a.dailySunscreen)),
         ('Routine rating',
@@ -156,10 +178,10 @@ class _AnswersSummary extends StatelessWidget {
         ('Symptoms', a.symptoms.map((s) => s.label).join(', ')),
         ('Duration', a.duration?.label ?? ''),
         ('Treatments', a.treatments.map((t) => t.label).join(', ')),
-        ('Product', [a.suspectedProduct?.label, a.productName]
-            .whereType<String>()
-            .where((s) => s.trim().isNotEmpty)
-            .join(' – ')),
+        ('Product', [
+          ...a.suspectedProducts.map((p) => p.label),
+          a.productName,
+        ].where((s) => s.trim().isNotEmpty).join(', ')),
         ('Worse at', a.worseTimes.map((w) => w.label).join(', ')),
         ('Comment', a.finalComment),
       ]);
@@ -195,19 +217,25 @@ class _AnswersSummary extends StatelessWidget {
 }
 
 class _NextStep extends StatelessWidget {
-  const _NextStep(this.icon, this.label, this.route);
+  const _NextStep(this.icon, this.label, this.route, {this.enabled = true});
 
   final IconData icon;
   final String label;
   final String route;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(icon, color: AppColors.primary),
+      leading: Icon(icon,
+          color: enabled ? AppColors.primary : AppColors.textSecondary),
       title: Text(label, style: AppTextStyles.body),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: () => Navigator.pushNamed(context, route),
+      trailing: enabled
+          ? const Icon(Icons.chevron_right)
+          : const ComingSoonTag(),
+      onTap: () => enabled
+          ? Navigator.pushNamed(context, route)
+          : showComingSoon(context, label),
     );
   }
 }
