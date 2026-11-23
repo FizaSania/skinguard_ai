@@ -1,7 +1,6 @@
 # SkinGuard AI – Static Flutter Frontend (FYP)
 
-Complete, navigable **static frontend** for SkinGuard AI, built from the Figma
-design (`SkinGuard AI.pdf`). Every screen works with mock data and in-memory
+Complete, navigable **static frontend** for SkinGuard AI. Every screen works with mock data and in-memory
 state. **No backend, ML model, database or API key is required.**
 
 > All analysis results, products and progress photos in this build are
