@@ -1,4 +1,10 @@
 import 'analysis_service.dart';
+import 'api_analysis_service.dart';
+import 'api_auth_service.dart';
+import 'api_client.dart';
+import 'api_profile_service.dart';
+import 'api_recommendation_service.dart';
+import 'api_scan_service.dart';
 import 'auth_service.dart';
 import 'image_service.dart';
 import 'plan_service.dart';
@@ -7,12 +13,9 @@ import 'recommendation_service.dart';
 import 'scan_service.dart';
 
 /// Single place where service implementations are chosen.
-///
-/// FUTURE BACKEND / ML / DATABASE INTEGRATION:
-/// Swap each `Mock...` class for its real implementation here – no screen
-/// needs to change.
 class AppServices {
   AppServices({
+    ApiClient? apiClient,
     AuthService? auth,
     ProfileService? profile,
     ScanService? scan,
@@ -20,14 +23,36 @@ class AppServices {
     ImageService? image,
     RecommendationService? recommendations,
     PlanService? plan,
-  })  : auth = auth ?? MockAuthService(),
-        profile = profile ?? MockProfileService(),
-        scan = scan ?? MockScanService(),
-        analysis = analysis ?? MockSkinAnalysisService(),
+  }) : this._init(
+          apiClient ?? ApiClient(),
+          auth: auth,
+          profile: profile,
+          scan: scan,
+          analysis: analysis,
+          image: image,
+          recommendations: recommendations,
+          plan: plan,
+        );
+
+  AppServices._init(
+    this.apiClient, {
+    AuthService? auth,
+    ProfileService? profile,
+    ScanService? scan,
+    SkinAnalysisService? analysis,
+    ImageService? image,
+    RecommendationService? recommendations,
+    PlanService? plan,
+  })  : auth = auth ?? ApiAuthService(apiClient),
+        profile = profile ?? ApiProfileService(apiClient),
+        scan = scan ?? ApiScanService(apiClient),
+        analysis = analysis ?? ApiAnalysisService(apiClient),
         image = image ?? DeviceImageService(),
-        recommendations = recommendations ?? MockRecommendationService(),
+        recommendations =
+            recommendations ?? ApiRecommendationService(apiClient),
         plan = plan ?? MockPlanService();
 
+  final ApiClient apiClient;
   final AuthService auth;
   final ProfileService profile;
   final ScanService scan;

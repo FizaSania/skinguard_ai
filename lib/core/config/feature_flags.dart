@@ -7,18 +7,18 @@ import '../../app/routes.dart';
 class FeatureFlags {
   FeatureFlags._();
 
-  // Dashboard · Explore Skincare / bottom navigation
-  static bool recommendations = false;
+// Dashboard · Explore Skincare / bottom navigation
+  static bool recommendations = true;
   static bool planner = false;
   static bool lifestyle = false;
-  static bool history = false;
+  static bool history = true;
 
   // Skin Analysis page
   static bool heatmap = false;
-  static bool whyThisResult = false;
+  static bool whyThisResult = true;
 
   // Result Details page: finding explanations and confidence values
-  static bool resultInsights = false;
+  static bool resultInsights = true;
 
   static void setAll(bool enabled) {
     recommendations = enabled;

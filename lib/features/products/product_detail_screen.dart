@@ -15,9 +15,6 @@ import '../recommendations/recommendation_loader.dart';
 
 /// Product details with ingredient, allergy and recommendation information.
 /// Sections appear only when their data is available.
-// FUTURE BACKEND INTEGRATION: fetch the product by id from the catalogue
-// API instead of MockProducts. Price, reasoning, stage, doctor advice,
-// conflicts and pairings already come through RecommendationService.
 class ProductDetailScreen extends StatelessWidget {
   const ProductDetailScreen({super.key, required this.productId});
 
@@ -25,22 +22,22 @@ class ProductDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final product = MockProducts.byId(productId);
-    if (product == null) {
-      return const PageLayout(children: [
-        EmptyState(
-            icon: Icons.search_off,
-            title: 'Product not found',
-            message: 'This product is no longer available.'),
-      ]);
-    }
-
     return RecommendationLoader(builder: (context, bundle) {
+      final recommendation = bundle.forProduct(productId);
+      final product = recommendation?.product ?? MockProducts.byId(productId);
+      if (product == null) {
+        return const PageLayout(children: [
+          EmptyState(
+              icon: Icons.search_off,
+              title: 'Product not found',
+              message: 'This product is no longer available.'),
+        ]);
+      }
+
       final profile = context.watch<UserProvider>().profile;
       final matches = MockRecommendationService.matchingAllergies(
           product, profile.allergies,
           reactionProduct: profile.reactionProduct);
-      final recommendation = bundle.forProduct(productId);
       final doctorAdvice = bundle.doctorAdvice;
       const sectionGap = SizedBox(height: AppSpacing.xl);
 
@@ -54,14 +51,31 @@ class ProductDetailScreen extends StatelessWidget {
                 color: Color.lerp(product.accentColor, AppColors.surface, 0.85),
                 borderRadius: BorderRadius.circular(AppRadius.xl),
               ),
-              child: Column(
-                children: [
-                  ProductBottle(color: product.accentColor, height: 130),
-                  const SizedBox(height: 8),
-                  Text('Illustration – product image placeholder',
-                      style: AppTextStyles.small),
-                ],
-              ),
+              child: product.imageUrl != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      child: Image.network(
+                        product.imageUrl!,
+                        height: 180,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, _, _) => Column(
+                          children: [
+                            ProductBottle(
+                                color: product.accentColor, height: 130),
+                          ],
+                        ),
+                      ),
+                    )
+                  : Column(
+                      children: [
+                        ProductBottle(color: product.accentColor, height: 130),
+                        if (bundle.isDemo) ...[
+                          const SizedBox(height: 8),
+                          Text('Illustration – product image placeholder',
+                              style: AppTextStyles.small),
+                        ],
+                      ],
+                    ),
             ),
           ),
           sectionGap,
@@ -69,8 +83,10 @@ class ProductDetailScreen extends StatelessWidget {
               style: AppTextStyles.overline),
           const SizedBox(height: 4),
           Text(product.name, style: AppTextStyles.h1),
-          const SizedBox(height: AppSpacing.sm),
-          const DemoBadge(label: 'Demo product'),
+          if (bundle.isDemo) ...[
+            const SizedBox(height: AppSpacing.sm),
+            const DemoBadge(label: 'Demo product'),
+          ],
           const SizedBox(height: AppSpacing.lg),
           Text(product.description, style: AppTextStyles.body),
           if (product.price case final price?) ...[
@@ -82,8 +98,7 @@ class ProductDetailScreen extends StatelessWidget {
             const InfoNote(
               icon: Icons.verified_outlined,
               text:
-                  'No ingredient in the available ingredient data matches your '
-                  'selected allergies. This is not a safety guarantee.',
+                  'Filtered against your selected allergies. Always verify the full product label and patch-test new products.',
             )
           else
             InfoNote(
@@ -94,20 +109,24 @@ class ProductDetailScreen extends StatelessWidget {
                   'Allergy warning: this product matches ${matches.join(', ')}. '
                   'Avoid this product.',
             ),
-          sectionGap,
-          const SectionTitle('Key ingredients'),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              for (final i in product.keyIngredients)
-                TagChip.positive(label: i),
-            ],
-          ),
-          sectionGap,
-          const SectionTitle('Key Ingredients Only'),
-          Text('${product.allIngredients.join(', ')}.',
-              style: AppTextStyles.bodySecondary),
+          if (product.keyIngredients.isNotEmpty) ...[
+            sectionGap,
+            const SectionTitle('Key ingredients'),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                for (final i in product.keyIngredients)
+                  TagChip.positive(label: i),
+              ],
+            ),
+          ],
+          if (product.allIngredients.isNotEmpty) ...[
+            sectionGap,
+            const SectionTitle('Key Ingredients Only'),
+            Text('${product.allIngredients.join(', ')}.',
+                style: AppTextStyles.bodySecondary),
+          ],
           if (recommendation != null) ...[
             sectionGap,
             const SectionTitle('Why This Product?'),
@@ -150,11 +169,6 @@ class ProductDetailScreen extends StatelessWidget {
               ),
             ],
           ],
-          sectionGap,
-          Text(
-            'Generic demonstration product: no actual price, store link or certification is implied.',
-            style: AppTextStyles.small,
-          ),
         ],
       );
     });

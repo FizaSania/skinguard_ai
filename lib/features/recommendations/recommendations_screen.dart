@@ -56,12 +56,35 @@ class RecommendationsScreen extends StatelessWidget {
                     'No scan result yet – these are general suggestions based on your skin profile.'),
             const SizedBox(height: AppSpacing.lg),
           ],
+          if (bundle.doctorAdvice != null && bundle.doctorAdvice!.hasContent) ...[
+            AppCard(
+              color: AppColors.blush,
+              borderColor: AppColors.blushBorder,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Dermatologist Guidance", style: AppTextStyles.h3),
+                  if (bundle.doctorAdvice!.referralStatus case final ref?) ...[
+                    const SizedBox(height: 6),
+                    Text('Referral Status: $ref', style: AppTextStyles.label),
+                  ],
+                  if (bundle.doctorAdvice!.message case final msg?) ...[
+                    const SizedBox(height: 8),
+                    Text(msg, style: AppTextStyles.body),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
           if (top == null)
-            const EmptyState(
-              icon: Icons.spa_outlined,
-              title: 'No matching products',
-              message:
-                  'Every demo product conflicts with your allergies or skin profile.',
+            EmptyState(
+              icon: Icons.medical_information_outlined,
+              title: bundle.stage == RecommendationStage.urgent
+                  ? 'Consult a Dermatologist'
+                  : 'No products needed right now',
+              message: bundle.doctorAdvice?.message ??
+                  'No product recommendations were returned for this scan.',
             )
           else
             _RecommendationCard(rec: top),
@@ -136,9 +159,11 @@ class RecommendationsScreen extends StatelessWidget {
             icon: Icons.health_and_safety_outlined,
             color: AppColors.blush,
             foreground: AppColors.clay,
-            text:
-                'Demo recommendations. Allergy filtering compares ingredient names only and does not '
-                'guarantee a product is safe for you – always check the full label and patch-test new products.',
+            text: bundle.isDemo
+              ? 'Demo recommendations. Allergy filtering compares ingredient names only and does not '
+                  'guarantee a product is safe for you – always check the full label and patch-test new products.'
+              : 'Allergy filtering compares ingredient names only and does not guarantee a product is safe '
+                  'for you – always check the full label and patch-test new products.',
           ),
         ],
       );

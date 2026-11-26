@@ -25,8 +25,10 @@ class ProductsScreen extends StatelessWidget {
       final concern = bundle.primaryConcern == 'General care'
           ? null
           : '${bundle.primaryConcern.toLowerCase()}-prone';
-      final picked = [?concern, if (skin != null && skin != 'not sure') '$skin skin']
-          .join(', ');
+      final picked = [
+        ?concern,
+        if (skin != null && skin != 'not sure') '$skin skin',
+      ].join(', ');
 
       return PageLayout(
         bottom: Column(
@@ -53,15 +55,19 @@ class ProductsScreen extends StatelessWidget {
                 : 'Picked for $picked, and free of the ingredients you avoid.',
             style: AppTextStyles.bodySecondary,
           ),
-          const SizedBox(height: AppSpacing.sm),
-          const DemoBadge(label: 'Demo products – not real brands'),
+          if (bundle.isDemo) ...[
+            const SizedBox(height: AppSpacing.sm),
+            const DemoBadge(label: 'Demo products – not real brands'),
+          ],
           const SizedBox(height: AppSpacing.xl),
           if (bundle.isEmpty)
-            const EmptyState(
+            EmptyState(
               icon: Icons.spa_outlined,
-              title: 'No products to show',
-              message:
-                  'None of the demo products match your profile and allergies.',
+              title: bundle.stage == RecommendationStage.urgent
+                  ? 'Consult a Dermatologist'
+                  : 'No products to show',
+              message: bundle.doctorAdvice?.message ??
+                  'No products were recommended for your current scan and profile.',
             )
           else
             for (final rec in bundle.recommendations)
@@ -73,9 +79,11 @@ class ProductsScreen extends StatelessWidget {
             icon: Icons.health_and_safety_outlined,
             color: AppColors.blush,
             foreground: AppColors.clay,
-            text:
-                'Product information is demonstration content. Verify ingredients on the actual '
-                'label – sensitivities vary from person to person.',
+            text: bundle.isDemo
+                ? 'Product information is demonstration content. Verify ingredients on the actual '
+                    'label – sensitivities vary from person to person.'
+                : 'Always verify ingredients on the actual product label and patch-test new '
+                    'products – sensitivities vary from person to person.',
           ),
         ],
       );
@@ -100,7 +108,22 @@ class ProductCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ProductBottle(color: p.accentColor, height: 76),
+              if (p.imageUrl != null)
+                SizedBox(
+                  width: 68,
+                  height: 76,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    child: Image.network(
+                      p.imageUrl!,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, _, _) =>
+                          ProductBottle(color: p.accentColor, height: 76),
+                    ),
+                  ),
+                )
+              else
+                ProductBottle(color: p.accentColor, height: 76),
               const SizedBox(width: AppSpacing.lg + 4),
               Expanded(
                 child: Column(
@@ -110,27 +133,35 @@ class ProductCard extends StatelessWidget {
                         style: AppTextStyles.overline),
                     const SizedBox(height: 2),
                     Text(p.name, style: AppTextStyles.h3.copyWith(fontSize: 20)),
-                    const SizedBox(height: 6),
-                    Text.rich(TextSpan(
-                      text: 'Key ingredients: ',
-                      style: AppTextStyles.label,
-                      children: [
-                        TextSpan(
-                            text: p.keyIngredients.join(', '),
-                            style: AppTextStyles.body),
-                      ],
-                    )),
+                    if (p.price case final price?) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        price,
+                        style: AppTextStyles.label
+                            .copyWith(color: AppColors.primary),
+                      ),
+                    ],
+                    if (p.keyIngredients.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text.rich(TextSpan(
+                        text: 'Key ingredients: ',
+                        style: AppTextStyles.label,
+                        children: [
+                          TextSpan(
+                              text: p.keyIngredients.join(', '),
+                              style: AppTextStyles.body),
+                        ],
+                      )),
+                    ],
                   ],
                 ),
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
-          Text.rich(TextSpan(
-            text: 'Why this? ',
-            style: AppTextStyles.label.copyWith(fontSize: 15),
-            children: [TextSpan(text: p.reason, style: AppTextStyles.body)],
-          )),
+          Text('Why this?', style: AppTextStyles.label.copyWith(fontSize: 15)),
+          const SizedBox(height: 4),
+          Text(p.reason, style: AppTextStyles.body),
           const SizedBox(height: AppSpacing.sm),
           Align(
             alignment: Alignment.centerRight,

@@ -27,6 +27,7 @@ class Product {
     required this.accentColor,
     this.howToUse = '',
     this.price,
+    this.imageUrl,
   });
 
   final String id;
@@ -47,6 +48,7 @@ class Product {
   // FUTURE DATABASE INTEGRATION: formatted price from the product table.
   // Demo products have none, so the Price row stays hidden.
   final String? price;
+  final String? imageUrl;
 
   /// Colour used for the illustrative bottle placeholder.
   final Color accentColor;

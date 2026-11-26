@@ -9,15 +9,13 @@ import '../../core/widgets/buttons.dart';
 import '../../core/widgets/layout.dart';
 import '../../models/skin_concern.dart';
 import '../../providers/scan_provider.dart';
+import '../../services/analysis_service.dart';
+import '../../services/app_services.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../theme/app_theme.dart';
 
 /// Shows analysis progress for the current scan.
-///
-/// FUTURE ML INTEGRATION: no change is needed here – the stages and result
-/// come from SkinAnalysisService (via ScanProvider.analyzeCurrent). When the
-/// real service is plugged in, this screen shows real progress.
 class AnalyzingScreen extends StatefulWidget {
   const AnalyzingScreen({super.key});
 
@@ -81,6 +79,8 @@ class _AnalyzingScreenState extends State<AnalyzingScreen> {
   @override
   Widget build(BuildContext context) {
     final progress = _completed / AnalysisStage.values.length;
+    final isDemoService =
+        context.read<AppServices>().analysis is MockSkinAnalysisService;
 
     return PopScope(
       canPop: !_running,
@@ -97,8 +97,10 @@ class _AnalyzingScreenState extends State<AnalyzingScreen> {
                   child: Column(
                     children: [
                       const SizedBox(height: AppSpacing.xl),
-                      const DemoBadge(label: 'Demo analysis – no real AI'),
-                      const SizedBox(height: AppSpacing.xl),
+                      if (isDemoService) ...[
+                        const DemoBadge(label: 'Demo analysis – no real AI'),
+                        const SizedBox(height: AppSpacing.xl),
+                      ],
                       _ProgressRing(
                           progress: progress, error: _error != null),
                       const SizedBox(height: AppSpacing.xxl),
@@ -115,7 +117,9 @@ class _AnalyzingScreenState extends State<AnalyzingScreen> {
                       Text(
                         _error ??
                             (_result != null
-                                ? 'Your demo result is ready.'
+                                ? (isDemoService
+                                    ? 'Your demo result is ready.'
+                                    : 'Your skin analysis result is ready.')
                                 : 'This can take a few moments. Please keep the app open.'),
                         textAlign: TextAlign.center,
                         style: AppTextStyles.bodySecondary,
